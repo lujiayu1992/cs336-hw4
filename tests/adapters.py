@@ -7,23 +7,22 @@ from cs336_data import util
 
 
 def run_extract_text_from_html_bytes(html_bytes: bytes) -> str | None:
-    raise NotImplementedError
+    return util.extract_text_from_html_bytes(html_bytes)
 
 
 def run_identify_language(text: str) -> tuple[Any, float]:
     return util.identify_language(text)
 
-
 def run_mask_emails(text: str) -> tuple[str, int]:
-    raise NotImplementedError
+    return util.mask_emails(text)
 
 
 def run_mask_phone_numbers(text: str) -> tuple[str, int]:
-    raise NotImplementedError
+    return util.mask_phone_numbers(text)
 
 
 def run_mask_ips(text: str) -> tuple[str, int]:
-    raise NotImplementedError
+    return util.mask_ips(text)
 
 
 def run_classify_nsfw(text: str) -> tuple[Any, float]:
@@ -32,7 +31,6 @@ def run_classify_nsfw(text: str) -> tuple[Any, float]:
 
 def run_classify_toxic_speech(text: str) -> tuple[Any, float]:
     return util.identify_toxic_speech(text)
-
 
 def run_classify_quality(text: str) -> tuple[Any, float]:
     raise NotImplementedError
