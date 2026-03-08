@@ -3,6 +3,7 @@ from fastwarc.stream_io import FileStream, GZipStream
 from fastwarc.warc import ArchiveIterator, WarcRecordType
 from resiliparse.extract.html2text import extract_plain_text
 from resiliparse.parse.encoding import detect_encoding
+import fasttext
 
 # --- Configuration & Constants ---
 # Defining these at the top level makes the code cleaner and easier to update
@@ -72,3 +73,17 @@ def mask_phone_numbers(text: str) -> tuple[str, int]:
 def mask_ips(text: str) -> tuple[str, int]:
   """Identifies and masks IPv4 addresses."""
   return _apply_mask(text, IP_PATTERN, IP_PLACEHOLDER)
+
+def identify_language(text: str):
+  text = text.replace("\n", " ")
+  model = fasttext.load_model(LANG_MODEL)
+  
+  # Predict the top 1 language
+  # k=1 returns the single most likely label
+  labels, scores = model.predict(text, k=1)
+  
+  # The label comes back as '__label__en', we need to strip the prefix
+  lang_id = labels[0].replace("__label__", "")
+  confidence = scores[0]
+  
+  return lang_id, confidence
