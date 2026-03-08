@@ -20,6 +20,9 @@ PHONE_PLACEHOLDER = "|||PHONE_NUMBER|||"
 IP_PATTERN = r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b"
 IP_PLACEHOLDER = "|||IP_ADDRESS|||"
 
+LANG_MODEL = "/workdir/model/lid.176.bin"
+HATE_MODEL = "/workdir/model/jigsaw_fasttext_bigrams_hatespeech_final.bin"
+NSFW_MODEL = "/workdir/model/jigsaw_fasttext_bigrams_nsfw_final.bin"
 
 def extract_text_from_html_bytes(html_bytes: bytes) -> str:
   """Extracts plain text from a byte string containing raw HTML.
@@ -74,16 +77,34 @@ def mask_ips(text: str) -> tuple[str, int]:
   """Identifies and masks IPv4 addresses."""
   return _apply_mask(text, IP_PATTERN, IP_PLACEHOLDER)
 
+def classify_text(text: str, model_path: str) -> tuple[str, float]:
+    """
+    Generic fastText classifier wrapper.
+    1. Cleans text (removes newlines).
+    2. Loads model (Note: for scale, load models outside this function).
+    3. Returns (label, confidence).
+    """
+    # fastText expects single lines for best performance
+    clean_text = text.replace("\n", " ")
+    
+    # In a real pipeline, you'd load this once and pass the object, 
+    # but for a direct replacement of your functions:
+    model = fasttext.load_model(model_path)
+    
+    labels, scores = model.predict(clean_text, k=1)
+    
+    # Strip '__label__' prefix and return
+    label = labels[0].replace("__label__", "")
+    return label, float(scores[0])
+
+# --- Refined Interface Functions ---
+# These now just call the helper with different paths
+
 def identify_language(text: str):
-  text = text.replace("\n", " ")
-  model = fasttext.load_model(LANG_MODEL)
-  
-  # Predict the top 1 language
-  # k=1 returns the single most likely label
-  labels, scores = model.predict(text, k=1)
-  
-  # The label comes back as '__label__en', we need to strip the prefix
-  lang_id = labels[0].replace("__label__", "")
-  confidence = scores[0]
-  
-  return lang_id, confidence
+    return classify_text(text, LANG_MODEL)
+
+def identify_nsfw(text: str):
+    return classify_text(text, NSFW_MODEL)
+
+def identify_toxic_speech(text: str):
+    return classify_text(text, HATE_MODEL)
